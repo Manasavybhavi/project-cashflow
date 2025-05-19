@@ -1,0 +1,1612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CashFit.ai - Dashboard</title>
+    <link rel="shortcut icon" href="logo.png" type="image/x-icon">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&family=Roboto:wght@300;400;500&family=Poppins:wght@600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    <meta name="theme-color" content="#FF7B2D">
+    <style>
+        :root {
+            --primary: #FF7B2D;
+            --primary-light: #FF9D5C;
+            --primary-dark: #E65F00;
+            --secondary: #333333;
+            --light-gray: #f5f5f5;
+            --white: #ffffff;
+            --text: #2D2D2D;
+            --border: #e0e0e0;
+            --success: #27AE60;
+            --error: #E74C3C;
+            --warning: #F39C12;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            color: var(--text);
+            background-color: var(--light-gray);
+            line-height: 1.6;
+        }
+        
+        h1, h2, h3, h4, h5 {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+        }
+
+        .main-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            width: 250px;
+            background-color: var(--white);
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        
+        .mobile-nav {
+            display: none;
+            background-color: var(--white);
+            padding: 15px 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 999;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .menu-toggle {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--primary);
+            cursor: pointer;
+        }
+        
+        .logo-container {
+            padding: 25px 20px;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .logo {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--primary);
+            text-decoration: none;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        .logo span {
+            color: var(--secondary);
+        }
+        
+        .user-profile {
+            display: flex;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 10px;
+        }
+        
+        .user-info {
+            overflow: hidden;
+        }
+        
+        .user-name {
+            font-weight: 500;
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .user-email {
+            font-size: 12px;
+            color: #777;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .nav-links {
+            padding: 20px 0;
+            flex: 1;
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            text-decoration: none;
+            color: var(--text);
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+        
+        .nav-item:hover {
+            background-color: rgba(255, 123, 45, 0.05);
+            color: var(--primary);
+        }
+        
+        .nav-item.active {
+            background-color: rgba(255, 123, 45, 0.1);
+            color: var(--primary);
+            border-left: 3px solid var(--primary);
+        }
+        
+        .nav-icon {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .logout {
+            padding: 15px 20px;
+            border-top: 1px solid var(--border);
+        }
+        
+        .logout-btn {
+            display: flex;
+            align-items: center;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 10px;
+            width: 100%;
+            text-align: left;
+            font-family: 'Roboto', sans-serif;
+            color: #777;
+            transition: color 0.3s ease;
+        }
+        
+        .logout-btn:hover {
+            color: var(--primary);
+        }
+        
+        .logout-icon {
+            margin-right: 10px;
+        }
+        
+        .content {
+            flex: 1;
+            padding: 30px;
+            margin-left: 250px;
+        }
+        
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .page-title {
+            font-size: 1.8rem;
+            color: var(--secondary);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background-color: var(--white);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+        }
+        
+        .stat-title {
+            font-size: 14px;
+            color: #777;
+            margin-bottom: 10px;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--secondary);
+        }
+        
+        .stat-icon {
+            float: right;
+            font-size: 30px;
+            color: var(--primary-light);
+            opacity: 0.7;
+        }
+        
+        .card-section {
+            margin-bottom: 40px;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .section-title {
+            font-size: 1.3rem;
+            color: var(--secondary);
+        }
+        
+        .view-all {
+            color: var(--primary);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        
+        .view-all:hover {
+            color: var(--primary-dark);
+        }
+        
+        .challenges-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .challenge-card {
+            background-color: var(--white);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .challenge-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .challenge-header {
+            padding: 15px 20px;
+            background-color: var(--primary);
+            color: var(--white);
+            position: relative;
+        }
+        
+        .challenge-title {
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+        
+        .challenge-type {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+        
+        .challenge-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 5px 10px;
+            border-radius: 50px;
+            font-size: 12px;
+        }
+        
+        .challenge-body {
+            padding: 20px;
+        }
+        
+        .challenge-stats {
+            display: flex;
+            margin-bottom: 15px;
+        }
+        
+        .challenge-stat {
+            flex: 1;
+            text-align: center;
+            padding: 0 5px;
+        }
+        
+        .stat-number {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--secondary);
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #777;
+        }
+        
+        .progress-container {
+            margin: 15px 0;
+        }
+        
+        .progress-bar {
+            height: 8px;
+            background-color: #eee;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background-color: var(--primary);
+            border-radius: 10px;
+        }
+        
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #777;
+            margin-top: 5px;
+        }
+        
+        .challenge-footer {
+            padding: 15px 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .participants {
+            display: flex;
+            align-items: center;
+        }
+        
+        .participant-avatar {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            border: 2px solid var(--white);
+            margin-left: -8px;
+        }
+        
+        .participant-avatar:first-child {
+            margin-left: 0;
+        }
+
+        ::selection {
+      background: var(--primary);
+      color: var(--white);
+    }
+        
+        .participant-count {
+            font-size: 12px;
+            color: #777;
+            margin-left: 10px;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background-color: rgba(255, 123, 45, 0.1);
+            color: var(--primary);
+        }
+        
+        .btn-secondary:hover {
+            background-color: rgba(255, 123, 45, 0.2);
+        }
+        
+        .activity-list {
+            background-color: var(--white);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .activity-item {
+            display: flex;
+            padding: 15px 0;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+        }
+
+        .activity-item:hover {
+            background-color: rgba(255, 123, 45, 0.03);
+        }
+        
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+        
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: rgba(255, 123, 45, 0.1);
+            color: var(--primary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        
+        .activity-content {
+            flex: 1;
+        }
+        
+        .activity-title {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+        
+        .activity-title strong {
+            color: var(--secondary);
+        }
+        
+        .activity-time {
+            font-size: 12px;
+            color: #999;
+        }
+        
+        .activity-status {
+            font-size: 12px;
+            padding: 3px 10px;
+            border-radius: 50px;
+            margin-left: 10px;
+        }
+        
+        .status-verified {
+            background-color: rgba(39, 174, 96, 0.1);
+            color: #27AE60;
+        }
+        
+        .status-pending {
+            background-color: rgba(242, 153, 74, 0.1);
+            color: #F2994A;
+        }
+
+        @media (max-width: 992px) {
+            .content {
+                margin-left: 0;
+                margin-top: 60px;
+            }
+            
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            
+            .mobile-nav {
+                display: flex;
+            }
+            
+            .overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: rgba(0, 0, 0, 0.5);
+                z-index: 999;
+                display: none;
+            }
+            
+            .overlay.active {
+                display: block;
+            }
+
+            #aa12 {
+                font-size: 10px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .challenges-grid {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .content {
+                padding: 20px 15px;
+            }
+            
+            .card-section {
+                margin-bottom: 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="overlay" id="overlay"></div>
+    
+    <nav class="mobile-nav">
+        <button class="menu-toggle" id="menu-toggle">
+            <i class="fas fa-bars"></i>
+        </button>
+        <a href="#" class="logo">
+            <i class="fas fa-dumbbell" style="font-size: 28px;"></i>
+            CashFit<span>.ai</span>
+        </a>
+        <div></div> 
+    </nav>
+    
+    <div class="main-container">
+        <aside class="sidebar" id="sidebar">
+            <div class="logo-container">
+                <a href="#" class="logo">
+                    <i class="fas fa-dumbbell" style="font-size: 28px;"></i>
+                    CashFit<span>.ai</span>
+                </a>
+            </div>
+            
+            <div class="user-profile">
+                <img src="" alt="User Avatar" class="avatar" id="user-avatar">
+                <div class="user-info">
+                    <div class="user-name" id="user-name">...</div>
+                    <div class="user-email" id="user-email">...</div>
+                </div>
+            </div>
+            
+            <div class="nav-links">
+                <a href="dashboard.html" class="nav-item active">
+                    <i class="fas fa-home nav-icon"></i>
+                    Dashboard
+                </a>
+                <a href="challenges.html" class="nav-item">
+                    <i class="fas fa-trophy nav-icon"></i>
+                    Challenges
+                </a>
+                <a href="workout.html" class="nav-item">
+                    <i class="fas fa-dumbbell nav-icon"></i>
+                    Workouts
+                </a>
+                <a href="history.html" class="nav-item">
+                    <i class="fas fa-history nav-icon"></i>
+                    History
+                </a>
+                <a href="#wallet" class="nav-item">
+                    <i class="fas fa-wallet nav-icon"></i>
+                    Wallet
+                </a>
+                <a href="#settings" class="nav-item">
+                    <i class="fas fa-cog nav-icon"></i>
+                    Settings
+                </a>
+                <a href="verifier.html" class="nav-item">
+                    <i class="fas fa-user-check nav-icon"></i>
+                    Verify & Earn
+                </a>
+                <a href="public-ledger.html" class="nav-item">
+                    <i class="fas fa-book nav-icon"></i>
+                    Public Ledger
+                </a>
+                <a href="public-ledger.html?page=technology" class="nav-item">
+                    <i class="fas fa-wrench nav-icon"></i>
+                    Our Technology
+                </a>
+            </div>
+            
+            <div class="logout">
+                <button class="logout-btn" id="logout-btn">
+                    <i class="fas fa-sign-out-alt logout-icon"></i>
+                    Logout
+                </button>
+            </div>
+        </aside>
+        
+        <main class="content">
+            <div class="dashboard-header">
+                <h1 class="page-title">Dashboard</h1>
+                <a href="challenges.html" id="aa12" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Join Challenge
+                </a>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-title">Active Challenges</div>
+                    <div class="stat-value" id="active-challenges">3</div>
+                    <i class="fas fa-fire stat-icon"></i>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-title">Total Workouts</div>
+                    <div class="stat-value" id="total-workouts">24</div>
+                    <i class="fas fa-dumbbell stat-icon"></i>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-title">Money Staked</div>
+                    <div class="stat-value" id="money-staked">₹2,640</div>
+                    <i class="fas fa-money-bill-wave stat-icon"></i>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-title">Earnings</div>
+                    <div class="stat-value" id="earnings">₹12,563</div>
+                    <i class="fas fa-hand-holding-usd stat-icon"></i>
+                </div>
+            </div>
+            
+            <div class="card-section">
+                <div class="section-header">
+                    <h2 class="section-title">Active Challenges</h2>
+                    <a href="challenges.html" class="view-all">View All <i class="fas fa-chevron-right"></i></a>
+                </div>
+                
+                <div class="challenges-grid" id="active-challenges-container">
+                    
+                    <div class="challenge-card">
+                        <div class="challenge-header">
+                            <h3 class="challenge-title">30 Days Push-Up</h3>
+                            <div class="challenge-type">Daily Challenge</div>
+                            <span class="challenge-badge">Day 12</span>
+                        </div>
+                        
+                        <div class="challenge-body">
+                            <div class="challenge-stats">
+                                <div class="challenge-stat">
+                                    <div class="stat-number">₹12,852</div>
+                                    <div class="stat-label">Prize Pool</div>
+                                </div>
+                                
+                                <div class="challenge-stat">
+                                    <div class="stat-number">15</div>
+                                    <div class="stat-label">Participants</div>
+                                </div>
+                                
+                                <div class="challenge-stat">
+                                    <div class="stat-number">18</div>
+                                    <div class="stat-label">Days Left</div>
+                                </div>
+                            </div>
+                            
+                            <div class="progress-container">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 40%"></div>
+                                </div>
+                                <div class="progress-text">
+                                    <span>40% Complete</span>
+                                    <span>12/30 Days</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="challenge-footer">
+                            <div class="participants">
+                                <img src="https://randomuser.me/api/portraits/men/32.jpg" class="participant-avatar">
+                                <img src="https://randomuser.me/api/portraits/women/44.jpg" class="participant-avatar">
+                                <img src="https://randomuser.me/api/portraits/men/59.jpg" class="participant-avatar">
+                                <span class="participant-count">+12 more</span>
+                            </div>
+                            
+                            <a href="workout.html" class="btn btn-primary">Work Out</a>
+                        </div>
+                    </div>
+                    
+                    <div class="challenge-card">
+                        <div class="challenge-header">
+                            <h3 class="challenge-title">Weekly Squat Challenge</h3>
+                            <div class="challenge-type">Weekly Challenge</div>
+                            <span class="challenge-badge">Week 2</span>
+                        </div>
+                        
+                        <div class="challenge-body">
+                            <div class="challenge-stats">
+                                <div class="challenge-stat">
+                                    <div class="stat-number">₹6,320</div>
+                                    <div class="stat-label">Prize Pool</div>
+                                </div>
+                                
+                                <div class="challenge-stat">
+                                    <div class="stat-number">8</div>
+                                    <div class="stat-label">Participants</div>
+                                </div>
+                                
+                                <div class="challenge-stat">
+                                    <div class="stat-number">2</div>
+                                    <div class="stat-label">Weeks Left</div>
+                                </div>
+                            </div>
+                            
+                            <div class="progress-container">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 50%"></div>
+                                </div>
+                                <div class="progress-text">
+                                    <span>50% Complete</span>
+                                    <span>2/4 Weeks</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="challenge-footer">
+                            <div class="participants">
+                                <img src="https://randomuser.me/api/portraits/women/22.jpg" class="participant-avatar">
+                                <img src="https://randomuser.me/api/portraits/men/11.jpg" class="participant-avatar">
+                                <img src="https://randomuser.me/api/portraits/women/33.jpg" class="participant-avatar">
+                                <span class="participant-count">+5 more</span>
+                            </div>
+                            
+                            <a href="workout.html" class="btn btn-primary">Work Out</a>
+                        </div>
+                    </div>
+                    
+                    <div class="challenge-card">
+                        <div class="challenge-header">
+                            <h3 class="challenge-title">Monthly Weight Loss</h3>
+                            <div class="challenge-type">Monthly Challenge</div>
+                            <span class="challenge-badge">Month 1</span>
+                        </div>
+                        
+                        <div class="challenge-body">
+                            <div class="challenge-stats">
+                                <div class="challenge-stat">
+                                    <div class="stat-number">₹7,300</div>
+                                    <div class="stat-label">Prize Pool</div>
+                                </div>
+                                
+                                <div class="challenge-stat">
+                                    <div class="stat-number">25</div>
+                                    <div class="stat-label">Participants</div>
+                                </div>
+                                
+                                <div class="challenge-stat">
+                                    <div class="stat-number">2</div>
+                                    <div class="stat-label">Months Left</div>
+                                </div>
+                            </div>
+                            
+                            <div class="progress-container">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 33%"></div>
+                                </div>
+                                <div class="progress-text">
+                                    <span>33% Complete</span>
+                                    <span>1/3 Months</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="challenge-footer">
+                            <div class="participants">
+                                <img src="https://randomuser.me/api/portraits/men/42.jpg" class="participant-avatar">
+                                <img src="https://randomuser.me/api/portraits/women/24.jpg" class="participant-avatar">
+                                <img src="https://randomuser.me/api/portraits/men/29.jpg" class="participant-avatar">
+                                <span class="participant-count">+22 more</span>
+                            </div>
+                            
+                            <a href="#" class="btn btn-secondary">Weekly Check-in</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-section">
+                <div class="section-header">
+                    <h2 class="section-title">Recent Activity</h2>
+                </div>
+                
+                <div class="activity-list" id="activity-container">
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="fas fa-dumbbell"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title">
+                                Completed <strong>20 push-ups</strong> for 30 Days Push-Up Challenge
+                                <span class="activity-status status-verified">Verified</span>
+                            </div>
+                            <div class="activity-time">Today, 9:45 AM</div>
+                        </div>
+                    </div>
+                    
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="fas fa-coins"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title">
+                                Staked <strong>₹1,673</strong> on Weekly Squat Challenge
+                            </div>
+                            <div class="activity-time">Yesterday, 6:20 PM</div>
+                        </div>
+                    </div>
+                    
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="fas fa-dumbbell"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title">
+                                Completed <strong>15 squats</strong> for Weekly Squat Challenge
+                                <span class="activity-status status-pending">Pending</span>
+                            </div>
+                            <div class="activity-time">Yesterday, 5:10 PM</div>
+                        </div>
+                    </div>
+                    
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="fas fa-trophy"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title">
+                                Joined <strong>Monthly Weight Loss</strong> challenge
+                            </div>
+                            <div class="activity-time">3 days ago</div>
+                        </div>
+                    </div>
+                    
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="fas fa-hand-holding-usd"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title">
+                                Earned <strong>₹1,274</strong> from Morning Yoga Challenge
+                            </div>
+                            <div class="activity-time">1 week ago</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        
+        const firebaseConfig = {
+            REMOVED
+};
+
+        
+        firebase.initializeApp(firebaseConfig);
+        
+        
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+        const menuToggle = document.getElementById('menu-toggle');
+        const logoutBtn = document.getElementById('logout-btn');
+        const userAvatar = document.getElementById('user-avatar');
+        const userName = document.getElementById('user-name');
+        const userEmail = document.getElementById('user-email');
+        
+        
+        menuToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        });
+        
+        
+        overlay.addEventListener('click', () => {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        });
+        
+        
+        logoutBtn.addEventListener('click', () => {
+            firebase.auth().signOut()
+                .then(() => {
+                    
+                    window.location.href = 'index.html';
+                })
+                .catch((error) => {
+                    console.error("Logout error:", error);
+                });
+        });
+        
+        function updateSettingsModal(user) {
+        document.getElementById('settings-avatar').src = user.photoURL || 'https://via.placeholder.com/60';
+        document.getElementById('settings-display-name').value = user.displayName || '';
+        document.getElementById('settings-email').value = user.email || '';
+    }
+
+        
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                
+                
+                
+                userAvatar.src = user.photoURL || 'https://via.placeholder.com/40';
+                userName.textContent = user.displayName;
+                userEmail.textContent = user.email;
+                
+                
+                updateSettingsModal(user);
+            } else {
+                
+                window.location.href = 'index.html';
+            }
+        });
+        
+        function formatDateToGMT530(date) {
+              const options = {
+                timeZone: 'Asia/Kolkata',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+              };
+              return date.toLocaleString('en-IN', options).replace(',', '');
+        }
+
+
+document.addEventListener('click', function(event) {
+            const element = event.target;
+            const email = firebase.auth().currentUser.email;
+        
+            const clickData = {
+                tagName: element.tagName,
+                id: element.id || null,
+                classList: Array.from(element.classList).join(' ') || null,
+                textContent: element.textContent.trim() || null,
+                timestamp: formatDateToGMT530(new Date()),
+                userInfo: email,
+                page: document.title
+            };
+            firebase.database().ref('clicks').push(clickData);
+        });
+        
+
+        
+        
+        
+        
+    </script>
+        
+        <div class="modal-container" id="wallet-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">Your Wallet</h3>
+                    <button class="close-modal" id="close-wallet-modal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="modal-body">
+                    <div class="wallet-balance">
+                        <h4>Available Balance</h4>
+                        <div class="balance-amount">₹18,726.32</div>
+                    </div>
+                    
+                    <div class="wallet-actions">
+                        <button class="wallet-action-btn">
+                            <i class="fas fa-plus-circle"></i> Add Funds
+                        </button>
+                        <button class="wallet-action-btn">
+                            <i class="fas fa-money-bill-wave"></i> Withdraw
+                        </button>
+                        <button class="wallet-action-btn">
+                            <i class="fas fa-exchange-alt"></i> Transfer
+                        </button>
+                    </div>
+                    
+                    <div class="transaction-history">
+                        <h4>Transaction History</h4>
+                        <div class="transaction-list">
+                            <div class="transaction-item">
+                                <div class="transaction-info">
+                                    <div class="transaction-title">Challenge Winnings</div>
+                                    <div class="transaction-date">June 12, 2025</div>
+                                </div>
+                                <div class="transaction-amount positive">+ ₹12,416.32</div>
+                            </div>
+                            
+                            <div class="transaction-item">
+                                <div class="transaction-info">
+                                    <div class="transaction-title">Joined Push-Up Challenge</div>
+                                    <div class="transaction-date">June 1, 2025</div>
+                                </div>
+                                <div class="transaction-amount negative">- ₹449.00</div>
+                            </div>
+                            
+                            <div class="transaction-item">
+                                <div class="transaction-info">
+                                    <div class="transaction-title">Added Funds</div>
+                                    <div class="transaction-date">May 28, 2025</div>
+                                </div>
+                                <div class="transaction-amount positive">+ ₹1,100.00</div>
+                            </div>
+                            
+                            <div class="transaction-item">
+                                <div class="transaction-info">
+                                    <div class="transaction-title">Verification Earnings</div>
+                                    <div class="transaction-date">May 15, 2025</div>
+                                </div>
+                                <div class="transaction-amount positive">+ ₹1,670.00</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="blockchain-info">
+                        <h4 class="blockchain-title">
+                            <i class="fas fa-shield-alt"></i> Blockchain Protection
+                        </h4>
+                        <p>All transactions are secured using our immutable blockchain verification system with distributed ledger technology. Each transaction is stored with a cryptographic hash linked to previous transactions, ensuring tamper-proof records of all financial activities.</p>
+                        <div class="hash-display" id="wallet-hash">
+                            0xfe8429fa52b84de8b9c3058cf778e852a102d32e74d5c507bba987eb1fe093e5
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        
+        
+        <div class="modal-container" id="settings-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">Account Settings</h3>
+                    <button class="close-modal" id="close-settings-modal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="modal-body">
+                    <div class="settings-section">
+                        <h4>Profile Information</h4>
+                        <div class="form-group">
+                            <label>Display Name</label>
+                            <input type="text" class="form-input" id="settings-display-name" value="XYZ ABC">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" class="form-input" id="settings-email" value="xyz.abc@cashfit.ai" disabled>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Profile Photo</label>
+                            <div class="avatar-upload">
+                                <img id="settings-avatar" src="https://randomuser.me/api/portraits/men/32.jpg" alt="Profile" class="settings-avatar">
+                                <button style="border: solid;" class="btn btn-secondary"><i style="margin-right: 5px;" class="fas fa-upload"></i>Change Photo</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-section">
+                        <h4>App Preferences</h4>
+                        
+                        <div class="form-group">
+                            <label>Notification Settings</label>
+                            <div class="toggle-option">
+                                <span>Challenge Reminders</span>
+                                <label class="switch">
+                                    <input type="checkbox" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                            
+                            <div class="toggle-option">
+                                <span>Verification Requests</span>
+                                <label class="switch">
+                                    <input type="checkbox" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                            
+                            <div class="toggle-option">
+                                <span>Payment Updates</span>
+                                <label class="switch">
+                                    <input type="checkbox" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Preferred Exercise Units</label>
+                            <select class="form-select">
+                                <option>Metric (kg, cm)</option>
+                                <option selected>Imperial (lb, in)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-section">
+                        <h4>Blockchain Security</h4>
+                        <div class="form-group">
+                            <label>Two-Factor Authentication</label>
+                            <div class="toggle-option">
+                                <span>Enable 2FA for Transactions</span>
+                                <label class="switch">
+                                    <input type="checkbox" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Personal Security Key</label>
+                            <div class="security-key">
+                                <code>f3a9b2c8d15e34f6</code>
+                                <button style="border-style: solid;" class="btn btn-small">Regenerate</button>
+                            </div>
+                            <p class="security-note">This key is used to sign your blockchain transactions and verify workout submissions</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button style="border: solid;" class="btn btn-secondary">Cancel</button>
+                    <button style="border: solid;" class="btn btn-primary">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    
+        
+        <style>
+            .modal-container {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.8);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 1000;
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.3s ease;
+            }
+            
+            .modal-container.active {
+                opacity: 1;
+                pointer-events: all;
+            }
+            
+            .modal-content {
+                background-color: var(--white);
+                border-radius: 15px;
+                width: 90%;
+                max-width: 600px;
+                max-height: 90vh;
+                overflow-y: auto;
+                box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+                position: relative;
+            }
+            
+            .modal-header {
+                padding: 20px;
+                border-bottom: 1px solid var(--border);
+                position: relative;
+            }
+            
+            .modal-title {
+                font-size: 1.5rem;
+                color: var(--primary);
+            }
+            
+            .close-modal {
+                position: absolute;
+                top: 20px;
+                right: 20px;
+                background: none;
+                border: none;
+                font-size: 1.5rem;
+                cursor: pointer;
+                color: #777;
+                transition: color 0.3s ease;
+            }
+            
+            .close-modal:hover {
+                color: var(--primary);
+            }
+            
+            .modal-body {
+                padding: 20px;
+            }
+            
+            .modal-footer {
+                padding: 20px;
+                border-top: 1px solid var(--border);
+                display: flex;
+                justify-content: flex-end;
+                gap: 15px;
+            }
+            
+            
+            .wallet-balance {
+                background-color: var(--primary);
+                color: white;
+                padding: 25px;
+                border-radius: 10px;
+                margin-bottom: 20px;
+                text-align: center;
+            }
+            
+            .balance-amount {
+                font-size: 2.5rem;
+                font-weight: 700;
+                margin-top: 10px;
+            }
+            
+            .wallet-actions {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 15px;
+                margin-bottom: 30px;
+            }
+            
+            .wallet-action-btn {
+                background-color: #f5f5f5;
+                border: none;
+                border-radius: 10px;
+                padding: 15px 10px;
+                text-align: center;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                font-family: 'Montserrat', sans-serif;
+                color: var(--secondary);
+            }
+            
+            .wallet-action-btn:hover {
+                background-color: rgba(255, 123, 45, 0.1);
+                color: var(--primary);
+            }
+            
+            .wallet-action-btn i {
+                display: block;
+                font-size: 1.5rem;
+                margin-bottom: 5px;
+                color: var(--primary);
+            }
+            
+            .transaction-history {
+                    margin-bottom: 20px;
+                }
+                
+                .transaction-history h4 {
+                    margin-bottom: 15px;
+                    padding-bottom: 10px;
+                    border-bottom: 1px solid var(--border);
+                }
+                
+                .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+        }
+
+        .transaction-item:hover {
+            background-color: rgba(255, 123, 45, 0.03);
+        }
+                
+                .transaction-title {
+                    font-weight: 500;
+                    margin-bottom: 3px;
+                }
+                
+                .transaction-date {
+                    font-size: 0.8rem;
+                    color: #777;
+                }
+                
+                .transaction-amount {
+                    font-weight: 700;
+                    font-size: 1.1rem;
+                }
+                
+                .transaction-amount.positive {
+                    color: var(--success);
+                }
+                
+                .transaction-amount.negative {
+                    color: var(--error);
+                }
+                
+                .blockchain-info {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 30px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+                    cursor: pointer;
+        }
+            
+        .blockchain-title {
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .blockchain-title i {
+            margin-right: 10px;
+            color: var(--primary);
+        }
+                
+                .hash-display {
+                    font-family: monospace;
+                    background-color: #f0f0f0;
+                    padding: 10px;
+                    border-radius: 5px;
+                    word-break: break-all;
+                    font-size: 0.8rem;
+                    margin-top: 10px;
+                }
+            
+            .settings-section {
+                margin-bottom: 30px;
+            }
+            
+            .settings-section h4 {
+                margin-bottom: 15px;
+                padding-bottom: 10px;
+                border-bottom: 1px solid var(--border);
+            }
+            
+            .form-group {
+                margin-bottom: 20px;
+            }
+            
+            .form-group label {
+                display: block;
+                margin-bottom: 8px;
+                font-weight: 500;
+        }
+        
+        .form-input, .form-select {
+            width: 100%;
+            padding: 12px 15px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            font-family: 'Roboto', sans-serif;
+            font-size: 0.9rem;
+            background-color: white;
+        }
+        
+        .avatar-upload {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .settings-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        
+        .toggle-option {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .toggle-option:last-child {
+            border-bottom: none;
+        }
+        
+        
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+        }
+        
+        input:checked + .slider {
+            background-color: var(--primary);
+        }
+        
+        input:focus + .slider {
+            box-shadow: 0 0 1px var(--primary);
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        
+        .slider.round {
+            border-radius: 34px;
+        }
+        
+        .slider.round:before {
+            border-radius: 50%;
+        }
+        
+        .security-key {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 5px;
+        }
+        
+        .security-key code {
+            font-family: monospace;
+            flex: 1;
+        }
+        
+        .btn-small {
+            padding: 5px 10px;
+            font-size: 0.8rem;
+        }
+        
+        .security-note {
+            font-size: 0.8rem;
+            color: #777;
+        }
+        
+        @media (max-width: 768px) {
+            .wallet-actions {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+
+    
+    <script>
+        
+        
+        
+        const walletModal = document.getElementById('wallet-modal');
+        const closeWalletModal = document.getElementById('close-wallet-modal');
+        const settingsModal = document.getElementById('settings-modal');
+        const closeSettingsModal = document.getElementById('close-settings-modal');
+        const walletNavItem = document.querySelector('.nav-item[href="#wallet"]');
+        const settingsNavItem = document.querySelector('.nav-item[href="#settings"]');
+        
+        
+        function openWalletModal() {
+            walletModal.classList.add('active');
+            document.body.style.overflow = 'hidden'; 
+        }
+        
+        
+        function closeWalletModalFunc() {
+            walletModal.classList.remove('active');
+            document.body.style.overflow = 'auto'; 
+        }
+        
+        
+        function openSettingsModal() {
+            settingsModal.classList.add('active');
+            document.body.style.overflow = 'hidden'; 
+        }
+        
+        
+        function closeSettingsModalFunc() {
+            settingsModal.classList.remove('active');
+            document.body.style.overflow = 'auto'; 
+        }
+        
+        
+        walletNavItem.addEventListener('click', (e) => {
+            e.preventDefault();
+            openWalletModal();
+        });
+        
+        settingsNavItem.addEventListener('click', (e) => {
+            e.preventDefault();
+            openSettingsModal();
+        });
+        
+        closeWalletModal.addEventListener('click', closeWalletModalFunc);
+        closeSettingsModal.addEventListener('click', closeSettingsModalFunc);
+        
+        
+        walletModal.addEventListener('click', (e) => {
+            if (e.target === walletModal) {
+                closeWalletModalFunc();
+            }
+        });
+        
+        settingsModal.addEventListener('click', (e) => {
+            if (e.target === settingsModal) {
+                closeSettingsModalFunc();
+            }
+        });
+    </script>
+</body>
+</html>
